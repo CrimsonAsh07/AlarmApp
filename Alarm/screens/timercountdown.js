@@ -1,8 +1,11 @@
 import * as React from 'react';
-import { useState, Component } from 'react';
+import { useState, Component, useEffect } from 'react';
 import moment, { duration } from 'moment';
-import { Text, View, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { Text, View, StyleSheet, TouchableOpacity, Dimensions, Alert } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import PushNotification from "react-native-push-notification";
+
+const window = Dimensions.get('window');
 
 function Timers({ interval, style }) {
     const zerofy = (n) => n < 10 ? '0' + n : n
@@ -35,6 +38,11 @@ function Alerts({ pass }) {
     return (null)
 }
 
+function ZeroAlert({ pass }) {
+    Alert.alert("Timer Was Set to Zero", "Please enter a valid quantity.", [{ text: 'Okay', onPress: pass() }])
+    return (null)
+}
+
 export default class Countdown extends React.Component {
 
     constructor(props) {
@@ -45,7 +53,13 @@ export default class Countdown extends React.Component {
             countdown: props.duration,
             paused: 0,
             diff: 0,
+            alert: 0,
         }
+
+    }
+
+    useEffect() {
+        createChannels();
     }
 
     componentDidMount() {
@@ -109,10 +123,42 @@ export default class Countdown extends React.Component {
         this.props.onPress?.();
     }
 
+    createChannels = () => {
+        PushNotification.createChannel(
+            {
+                channelId: '1',
+                channelName: 'Alarm Channel',
+                playSound: true,
+                soundName: 'ring1.mp3'
+            })
+    }
+
+    handleNotifications = () => {
+        PushNotification.localNotification({
+            channelId: '1',
+            title: 'ChronoType',
+            message: 'Timer Done!',
+            allowWhileIdle: true,
+            playSound: true,
+        })
+    }
+
+
+
     render() {
         const { currenttime, start, countdown, paused } = this.state
         const diff = start - currenttime
         const timer = countdown + diff
+
+        if (timer <= 0) {
+            PushNotification.localNotification({
+                channelId: '1',
+                title: 'ChronoType',
+                message: 'Timer Done!',
+                allowWhileIdle: true,
+                playSound: true,
+            })
+        }
 
         return (
             <View style={styles.container}>
@@ -145,10 +191,18 @@ export default class Countdown extends React.Component {
                     )
                 }
                 {
-                    timer <= 0 && (
+                    timer <= 0 && this.props.duration != 0 && (
                         <View>
-
                             <Alerts pass={this.back} />
+                        </View>)
+                }
+                {
+                    this.props.duration == 0 && (
+                        <View style={styles.alert}>
+                            <Text style={styles.alerttext}>Please Enter a Non-Zero Value</Text>
+                            <TouchableOpacity style={styles.redokay} onPress={() => this.back()}>
+                                <Text style={styles.okay}>Okay</Text>
+                            </TouchableOpacity>
                         </View>)
                 }
 
@@ -231,4 +285,33 @@ const styles = StyleSheet.create({
         height: 200,
         width: 100
     },
+    alert: {
+        position: 'absolute',
+        top: window.height * 0.4,
+        backgroundColor: '#31444b',
+        alignSelf: 'center',
+        marginHorizontal: window.width * 0.025,
+        borderRadius: 15,
+    },
+    alerttext: {
+        fontSize: 20,
+        color: 'white',
+        fontFamily: 'cooper',
+        paddingVertical: 40,
+        paddingHorizontal: 50,
+    },
+    redokay: {
+        alignSelf: 'center',
+        backgroundColor: '#f0425d',
+        width: '100%',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomLeftRadius: 15,
+        borderBottomRightRadius: 15,
+    },
+    okay: {
+        fontSize: 15,
+        color: 'white',
+        fontFamily: 'cooper',
+    }
 })

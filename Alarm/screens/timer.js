@@ -24,7 +24,8 @@ import {
     ToastAndroid
 } from 'react-native';
 import Countdown from './timercountdown';
-import Ionicons from 'react-native-vector-icons/Ionicons'
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import PushNotification from "react-native-push-notification";
 
 const timers = [...Array(62).keys()].map((i) => i < 10 ? '0' + i : i);
 const halftimers = [...Array(26).keys()].map((i) => i < 10 ? '0' + i : i);
@@ -59,10 +60,11 @@ const Timer: () => Node = () => {
     const scrollX2 = React.useRef(new Animated.Value(0)).current;
     const scrollX3 = React.useRef(new Animated.Value(0)).current;
 
-    const addProfile = (hours, minutes, seconds) => {
+    const addProfile = (hours, minutes, seconds, totaltime) => {
         const key = Math.random().toString();
+        let filteredProfiles = profile.filter(profile => profile.totaltime != totaltime)
         setProfile((currentProfiles) => {
-            return [{ hours: hours, minutes: minutes, seconds: seconds, key: key }, ...currentProfiles]
+            return [{ hours: hours, minutes: minutes, seconds: seconds, totaltime: totaltime, key: key }, ...filteredProfiles]
         });
         ToastAndroid.show('Profile Added', ToastAndroid.SHORT);
         setModalOpen(false);
@@ -81,6 +83,32 @@ const Timer: () => Node = () => {
     const [screen, setScreen] = useState(true);
     const [profile, setProfile] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
+
+    useEffect(() => {
+        createChannels();
+    })
+
+    const createChannels = () => {
+        PushNotification.createChannel(
+            {
+                channelId: '1',
+                channelName: 'Alarm Channel',
+                playSound: true,
+                soundName: 'ring1.mp3',
+            })
+    }
+
+    const handleNotifications = (x) => {
+        if (x !== 0) {
+            PushNotification.localNotification({
+                channelId: '1',
+                title: 'ChronoType',
+                message: 'Alarm Done!',
+                allowWhileIdle: true,
+                playSound: true,
+            })
+        }
+    }
 
     return (
         <View style={styles.container}>
@@ -123,12 +151,7 @@ const Timer: () => Node = () => {
             </Modal>
             {screen === false && (
                 <View style={styles.countdown}>
-                    <Countdown duration={totaltime} onPress={() => setScreen(true)} />
-                </View>
-            )}
-            {screen === false && (
-                <View style={styles.countdown}>
-                    <Countdown duration={totaltime} onPress={() => setScreen(true)} />
+                    <Countdown duration={totaltime} onPress={() => { setScreen(true) }} />
                 </View>
             )}
             {
@@ -308,14 +331,17 @@ const Timer: () => Node = () => {
                                     <Ionicons name='play' size={30} color='white' onPress={() => setScreen(false)} style={styles.icon} />
                                 </View>
                                 <View style={styles.add}>
-                                    <Ionicons name='add' size={30} color='white' onPress={() => { addProfile(hours, minutes, seconds) }} style={styles.icon} />
+                                    <Ionicons name='add' size={30} color='white' onPress={() => {
+                                        addProfile(hours, minutes, seconds, 1000 * ((parseInt(hours) * 3600) + (parseInt(minutes) * 60) + parseInt(seconds)))
+                                    }
+                                    } style={styles.icon} />
                                 </View>
                             </View>
                         </View>
                     </View>)
             }
 
-        </View >
+        </View>
     );
 
 };
@@ -340,7 +366,7 @@ const styles = StyleSheet.create({
     },
     timenumber: {
         height: NUMBER_SIZE,
-        paddingHorizontal: 20,
+        paddingHorizontal: window.width * 0.025,
     },
     datemonth: {
         backgroundColor: '#31444b',
@@ -348,12 +374,14 @@ const styles = StyleSheet.create({
         height: window.height * 0.37,
         marginTop: window.height * 0.03,
         borderRadius: 30,
-        marginHorizontal: 30,
+        marginHorizontal: window.width * 0.1,
+        justifyContent: 'center'
     },
     datemonthtext: {
         color: '#f0425d',
         fontFamily: 'sfbold',
-        marginHorizontal: 20,
+        marginHorizontal: window.width * 0.025,
+
         paddingLeft: 5,
         marginTop: 10,
         fontSize: 30,

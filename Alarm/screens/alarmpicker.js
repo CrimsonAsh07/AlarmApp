@@ -10,14 +10,18 @@ import {
     View,
     TextInput,
     StyleSheet,
+    ScrollView
 } from 'react-native';
 import moment from 'moment';
-import Ionicons from 'react-native-vector-icons/Ionicons'
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import MaterialIcons from 'react-native-vector-icons/MaterialIcons';
+import PushNotification from "react-native-push-notification";
+import SoundPlayer from 'react-native-sound-player';
 
 const timers = [...Array(62).keys()].map((i) => i < 10 ? '0' + i : i);
 const halftimers = [...Array(26).keys()].map((i) => i < 10 ? '0' + i : i);
-const days = [...Array(33).keys()].map((i) => i < 9 ? '0' + (i + 1) : i + 1);
-const months = [...Array(14).keys()].map((i) => i < 9 ? '0' + (i + 1) : i + 1);
+const days = [...Array(33).keys()].map((i) => i < 9 ? '0' + (parseInt(i) + 1) : i + 1);
+const months = [...Array(14).keys()].map((i) => i < 9 ? '0' + (parseInt(i) + 1) : i + 1);
 const window = Dimensions.get('window');
 const NUMBER_SIZE = window.width * 0.19;
 const NUMBER_SPACING = window.width * 0.31;
@@ -39,12 +43,20 @@ export default function AlarmPicker({ addAlarm }) {
     const scrollX3 = React.useRef(new Animated.Value(0)).current;
     const scrollX4 = React.useRef(new Animated.Value(0)).current;
 
-    const [hours, setHours] = useState(0);
-    const [minutes, setMinutes] = useState(0);
-    const [date, setDate] = useState(1);
-    const [mon, setMon] = useState(1);
+    const [hours, setHours] = useState('00');
+    const [minutes, setMinutes] = useState('00');
+    const [date, setDate] = useState('01');
+    const [mon, setMon] = useState('01');
+    const [nameBox, setNameBox] = useState(0);
+    const [option, setOption] = useState('1');
 
     const [modalOpen, setModalOpen] = useState(false);
+
+    const musicPlayer = (x) => {
+        setOption(x);
+        let name = 'ring' + x
+        SoundPlayer.playSoundFile(name, 'mp3')
+    }
 
     return (
         <View style={styles.container}>
@@ -159,7 +171,6 @@ export default function AlarmPicker({ addAlarm }) {
                         />
                     </View>
                 </View>
-
                 <View style={styles.datemonth2}>
                     <View>
                         <Text style={styles.datemonthtext2}>Hour</Text>
@@ -270,13 +281,49 @@ export default function AlarmPicker({ addAlarm }) {
                         />
                     </View>
                 </View>
+                {nameBox == 1 && (
+                    <View style={styles.properties}>
+                        <Text style={styles.proptext}>Set Custom Ringtone</Text>
+                        <View>
+                            <TouchableOpacity style={styles.option} onPress={() => musicPlayer('1')}>
+                                <Text style={styles.optiontext}>Alarm I</Text>
+                                {option === '1' && (
+                                    <Ionicons style={{ padding: 10, }} name='checkmark' color='green' size={24} />
+                                )}
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.option} onPress={() => musicPlayer('2')}>
+                                <Text style={styles.optiontext}>Alarm II</Text>
+                                {option === '2' && (
+                                    <Ionicons style={{ padding: 10, }} name='checkmark' color='green' size={24} />
+                                )}
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.option} onPress={() => musicPlayer('3')}>
+                                <Text style={styles.optiontext}>Digital Alarm</Text>
+                                {option === '3' && (
+                                    <Ionicons style={{ padding: 10, }} name='checkmark' color='green' size={24} />
+                                )}
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.option} onPress={() => musicPlayer('4')}>
+                                <Text style={styles.optiontext}>Chimes</Text>
+                                {option === '4' && (
+                                    <Ionicons style={{ padding: 10, }} name='checkmark' color='green' size={24} />
+                                )}
+                            </TouchableOpacity>
 
+                        </View>
+                        <TouchableOpacity style={styles.redokay} onPress={() => { setNameBox(0); SoundPlayer.stop() }} >
+                            <Text style={styles.okay}>Close</Text>
+                        </TouchableOpacity>
+                    </View>
+                )}
                 <View style={styles.button}>
                     <View style={styles.add}>
-                        <Ionicons name='caret-forward' size={50} color='white' onPress={() => { addAlarm(date, hours, mon, minutes) }} style={styles.icon} />
+                        <MaterialIcons name='graphic-eq' size={40} color='white' onPress={() => setNameBox(1)} style={[styles.icon, { paddingVertical: 8, paddingRight: 8, paddingLeft: 10 }]} />
+                    </View>
+                    <View style={styles.add}>
+                        <Ionicons name='caret-forward' size={50} color='white' onPress={() => { addAlarm(date, mon, hours, minutes, option) }} style={styles.icon} />
                     </View>
                 </View>
-
             </View>
         </View>
     );
@@ -340,7 +387,10 @@ const styles = StyleSheet.create({
     },
     button: {
         position: 'absolute',
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         right: 0,
+        left: 0,
         bottom: 0,
     },
     icon: {
@@ -358,5 +408,50 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
-
+    properties: {
+        position: 'absolute',
+        top: window.height * 0.3,
+        backgroundColor: '#31444b',
+        alignSelf: 'center',
+        marginHorizontal: window.width * 0.015,
+        borderRadius: 15,
+        borderWidth: 1,
+        borderColor: '#f0425d'
+    },
+    proptext: {
+        fontSize: 20,
+        color: 'white',
+        fontFamily: 'cooper',
+        paddingTop: 10,
+        paddingBottom: 30,
+        paddingHorizontal: 50,
+    },
+    redokay: {
+        alignSelf: 'center',
+        backgroundColor: '#f0425d',
+        width: '100%',
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderBottomLeftRadius: 10,
+        borderBottomRightRadius: 10,
+    },
+    okay: {
+        fontSize: 15,
+        color: 'white',
+        fontFamily: 'cooper',
+    },
+    option: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingHorizontal: 10,
+        marginHorizontal: 10,
+        borderBottomColor: '#23343b',
+        borderBottomWidth: 1,
+    },
+    optiontext: {
+        fontFamily: 'cooper',
+        fontSize: 20,
+        color: 'white',
+        paddingVertical: 10,
+    },
 });

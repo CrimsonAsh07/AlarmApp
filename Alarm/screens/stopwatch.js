@@ -5,7 +5,6 @@
 
 import React from 'react';
 import { useState, Component } from 'react';
-import type { Node } from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -15,10 +14,13 @@ import {
     Image,
     useColorScheme,
     TouchableOpacity,
+    Dimensions,
     View,
 } from 'react-native';
 import moment from 'moment';
 import Ionicons from 'react-native-vector-icons/Ionicons'
+
+const window = Dimensions.get('window');
 
 function Timer({ interval, style }) {
     const zerofy = (n) => n < 10 ? '0' + n : n
@@ -221,14 +223,15 @@ const styles = StyleSheet.create({
 
     timer: {
         color: 'white',
-        fontSize: 65,
+        fontSize: 55,
         fontWeight: '200',
         fontFamily: 'cooper',
         backgroundColor: '#31444b',
+        justifyContent: 'center',
         borderRadius: 25,
-        paddingHorizontal: 30,
+        paddingHorizontal: window.width * 0.1,
         paddingVertical: 20,
-        marginHorizontal: 30,
+        marginHorizontal: window.width * 0.1,
     },
 
     buttons: {
@@ -250,7 +253,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         height: 40,
         paddingHorizontal: 20,
-        paddingTop: 10,
+        paddingBottom: 15,
     },
 
     scrollView: {
@@ -264,7 +267,6 @@ const styles = StyleSheet.create({
         marginHorizontal: 30,
         alignSelf: 'stretch',
         backgroundColor: '#1c272d',
-        paddingBottom: 20,
         borderRadius: 25,
         paddingVertical: 10,
     }

@@ -26,6 +26,7 @@ import {
 import Countdown from './timercountdown';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import PushNotification from "react-native-push-notification";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const timers = [...Array(62).keys()].map((i) => i < 10 ? '0' + i : i);
 const halftimers = [...Array(26).keys()].map((i) => i < 10 ? '0' + i : i);
@@ -83,10 +84,40 @@ const Timer: () => Node = () => {
     const [screen, setScreen] = useState(true);
     const [profile, setProfile] = useState([]);
     const [modalOpen, setModalOpen] = useState(false);
+    const [loaded, setLoaded] = useState(false);
 
     useEffect(() => {
         createChannels();
     })
+
+    useEffect(() => {
+        if (loaded) {
+            persistState();
+        }
+    }, [profile]);
+
+    useEffect(() => {
+        readState();
+    }, [])
+
+    const persistState = async () => {
+        const data = {
+            profile
+        };
+        const dataString = JSON.stringify(data);
+        await AsyncStorage.setItem('@profile', dataString);
+    }
+
+    const readState = async () => {
+        const dataString = await AsyncStorage.getItem('@profile');
+        try {
+            const data = JSON.parse(dataString);
+            setProfile(data.profile)
+        } catch (e) {
+            console.log('Couldnt Parse');
+        }
+        setLoaded(true);
+    }
 
     const createChannels = () => {
         PushNotification.createChannel(

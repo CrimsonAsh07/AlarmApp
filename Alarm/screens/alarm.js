@@ -29,29 +29,6 @@ const window = Dimensions.get('window');
 
 const Alarm: () => Node = () => {
 
-    const getData = async () => {
-        try {
-            const jsonValue = await AsyncStorage.getItem('@storage_Key')
-            console.log(jsonValue)
-            setAlarms(JSON.parse(jsonValue));
-        } catch (e) {
-            console.log(e)
-            console.log('retrieving error')
-        }
-    }
-
-
-    const storeData = async (alarms) => {
-        try {
-            console.log(JSON.stringify(alarms))
-            const jsonValue = JSON.stringify(alarms)
-            console.log(jsonValue)
-            await AsyncStorage.setItem('@storage_Key', jsonValue)
-        } catch (e) {
-            console.log(e)
-            console.log('storing error')
-        }
-    }
 
     PushNotification.configure({
 
@@ -68,6 +45,8 @@ const Alarm: () => Node = () => {
     const [alert, setAlert] = useState('0')
     const [alarmprop, setAlarmProp] = useState(0)
     const [alarms, setAlarms] = useState([])
+    const [loaded, setLoaded] = useState(false)
+
     const deleteAlarm = (key) => {
         setAlarms((prevAlarms) => {
             return prevAlarms.filter(alarm => alarm.key != key);
@@ -107,14 +86,42 @@ const Alarm: () => Node = () => {
             return [{ day: day, month: month, hour: hour, min: min, key: key, option: option }, ...currentAlarms]
         });
 
-        storeData(alarms);
         handleNotifications(day, month, hour, min, option, key);
     }
 
     useEffect(() => {
         createChannels();
-        storeData(alarms);
     }, [])
+
+    useEffect(() => {
+        if (loaded) {
+            persistState();
+        }
+    }, [alarms]);
+
+    useEffect(() => {
+        readState();
+    }, [])
+
+    const persistState = async () => {
+        const data = {
+            alarms
+        };
+        const dataString = JSON.stringify(data);
+        await AsyncStorage.setItem('@game', dataString);
+    }
+
+    const readState = async () => {
+        const dataString = await AsyncStorage.getItem('@game');
+        try {
+            const data = JSON.parse(dataString);
+            setAlarms(data.alarms)
+        } catch (e) {
+            console.log('Couldnt Parse');
+        }
+        setLoaded(true);
+    }
+
 
     const createChannels = () => {
         PushNotification.createChannel(
